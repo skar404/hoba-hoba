@@ -1,187 +1,141 @@
 package main
 
 import (
-	"encoding/xml"
+	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 
 	"github.com/skar404/hoba-hoba/libs"
 	"github.com/skar404/hoba-hoba/requests"
+	"github.com/skar404/hoba-hoba/rss"
 	"github.com/skar404/hoba-hoba/telegram"
 )
-
-type Rss struct {
-	XMLName    xml.Name `xml:"rss"`
-	Text       string   `xml:",chardata"`
-	Version    string   `xml:"version,attr"`
-	Atom       string   `xml:"atom,attr"`
-	Content    string   `xml:"content,attr"`
-	Googleplay string   `xml:"googleplay,attr"`
-	Itunes     string   `xml:"itunes,attr"`
-	Channel    struct {
-		Text string `xml:",chardata"`
-		Link []struct {
-			Text  string `xml:",chardata"`
-			Href  string `xml:"href,attr"`
-			Rel   string `xml:"rel,attr"`
-			Title string `xml:"title,attr"`
-			Type  string `xml:"type,attr"`
-			Xmlns string `xml:"xmlns,attr"`
-		} `xml:"link"`
-		Generator     string `xml:"generator"`
-		Title         string `xml:"title"`
-		Description   string `xml:"description"`
-		Copyright     string `xml:"copyright"`
-		Language      string `xml:"language"`
-		PubDate       string `xml:"pubDate"`
-		LastBuildDate string `xml:"lastBuildDate"`
-		Image         struct {
-			Text  string `xml:",chardata"`
-			Href  string `xml:"href,attr"`
-			Link  string `xml:"link"`
-			Title string `xml:"title"`
-			URL   string `xml:"url"`
-		} `xml:"image"`
-		Type       string `xml:"type"`
-		Summary    string `xml:"summary"`
-		Author     string `xml:"author"`
-		Explicit   string `xml:"explicit"`
-		NewFeedURL string `xml:"new-feed-url"`
-		Keywords   string `xml:"keywords"`
-		Owner      struct {
-			Text  string `xml:",chardata"`
-			Name  string `xml:"name"`
-			Email string `xml:"email"`
-		} `xml:"owner"`
-		Category []struct {
-			Text     string `xml:",chardata"`
-			AttrText string `xml:"text,attr"`
-			Category struct {
-				Text     string `xml:",chardata"`
-				AttrText string `xml:"text,attr"`
-			} `xml:"category"`
-		} `xml:"category"`
-		Item []RssItem `xml:"item"`
-	} `xml:"channel"`
-}
-
-type RssItem struct {
-	Text string `xml:",chardata"`
-	Guid struct {
-		Text        string `xml:",chardata"`
-		IsPermaLink string `xml:"isPermaLink,attr"`
-	} `xml:"guid"`
-	Title       string `xml:"title"`
-	Description string `xml:"description"`
-	PubDate     string `xml:"pubDate"`
-	Author      string `xml:"author"`
-	Link        string `xml:"link"`
-	Encoded     string `xml:"encoded"`
-	Enclosure   struct {
-		Text   string `xml:",chardata"`
-		Length string `xml:"length,attr"`
-		Type   string `xml:"type,attr"`
-		URL    string `xml:"url,attr"`
-	} `xml:"enclosure"`
-	Duration    string `xml:"duration"`
-	Summary     string `xml:"summary"`
-	Subtitle    string `xml:"subtitle"`
-	Explicit    string `xml:"explicit"`
-	EpisodeType string `xml:"episodeType"`
-	Episode     string `xml:"episode"`
-}
 
 var FileClient = requests.RequestClient{
 	Url:     "",
 	Timeout: 10 * time.Second,
 }
 
+var DB = redis.NewClient(&redis.Options{
+	Addr:     getEnv("DB_HOST", "localhost:6370"),
+	Password: "", // no password set
+	DB:       1,  // use default DB
+})
+
+func getEnv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}
+
 func main() {
-	res := requests.Response{}
+	var chatIds []int
 	{
-		feedClient := requests.RequestClient{
-			Url:     "https://feeds.simplecast.com/jWytY2EF",
-			Timeout: 1 * time.Second,
-			Header: map[string][]string{
-				"Content-Type": {"application/json"},
-				"charset":      {"utf-8"},
-			},
-		}
+		chatIdsStr := strings.Split(os.Getenv("CHAT_IDS"), ",")
+		for _, v := range chatIdsStr {
+			i, err := strconv.Atoi(v)
+			if err != nil {
+				log.Panicf("[PANIC] not valid CHAT_IDS, %+v", chatIdsStr)
+			}
 
-		req := requests.Request{
-			Flags: requests.RequestFlags{
-				IsBodyString: true,
-			},
-		}
-
-		err := feedClient.NewRequest(&req, &res)
-		if err != nil {
-			panic(err)
+			chatIds = append(chatIds, i)
 		}
 	}
 
-	rssFeed := Rss{}
-	{
-		err := xml.Unmarshal(res.BodyRaw, &rssFeed)
+	for true {
+		rssFeed, err := rss.GetFeed()
+
 		if err != nil {
-			panic(err)
-		}
-	}
-
-	// Send to telegram
-
-	for _, v := range rssFeed.Channel.Item {
-
-		err := createPost(v)
-		if err != nil {
-			log.Panicf("error send post v=%+v err=%s", v, err)
+			log.Printf("[ERROR] get feed err=%s", err)
+			continue
 		}
 
-		//panic("")
-	}
+		for _, v := range rssFeed.Channel.Item {
+			ctx := context.Background()
 
+			for _, chatId := range chatIds {
+				guid := fmt.Sprintf("epiisode:%s::chat:%d", v.Episode, chatId)
+				_, err := DB.Get(ctx, guid).Result()
+				if err != redis.Nil {
+					if err != nil {
+						log.Printf("[ERROR] conn to Redis err=%s", err)
+					}
+					continue
+				}
+
+				err = createPost(chatId, v)
+				if err != nil {
+					log.Printf("[ERROR] send post episode=%s err=%s", v.Episode, err)
+				}
+
+				if err := DB.Set(ctx, guid, fmt.Sprintf("%+v", v), 0).Err(); err != nil {
+					log.Printf("[ERROR] redis is err=%s\n", err)
+				}
+			}
+		}
+
+		time.Sleep(15 * time.Minute)
+	}
 }
 
 func downloadAudioFile(url string) ([]byte, error) {
-	//req := requests.Request{
-	//	Method: http.MethodGet,
-	//	Uri:    url,
-	//}
-	//res := requests.Response{}
-	//err := FileClient.NewRequest(&req, &res)
-	//return res.BodyRaw, err
-
-	return ioutil.ReadFile("file.mp3")
+	req := requests.Request{
+		Method: http.MethodGet,
+		Uri:    url,
+	}
+	res := requests.Response{}
+	err := FileClient.NewRequest(&req, &res)
+	return res.BodyRaw, err
 }
 
-func createPost(v RssItem) error {
-	chatId := -1001497299213
+func FakeFile(url string) ([]byte, error) {
+	return ioutil.ReadFile("test_file.mp3")
+}
 
-	//file, err := downloadAudioFile(v.Enclosure.URL)
-	//if err != nil {
-	//	return err
-	//}
-	//log.Printf("download audio file url=%s", v.Enclosure.URL)
-	var messageId = 0
-	//messageId, err := telegram.SendAudio(chatId, "Хоба", file)
-	//if err != nil {
-	//	return err
-	//}
-	//log.Printf("send audio")
+func createPost(chatId int, v rss.Item) error {
+	file, err := downloadAudioFile(v.Enclosure.URL)
+	if err != nil {
+		return err
+	}
+	log.Printf("[INFO] download audio file url=%s", v.Enclosure.URL)
 
-	//validHtml, err := libs.HtmlToMarkdown(v.Description)
-	//if err != nil {
-	//	return err
-	//}
+	isShort := true
+	caption := fmt.Sprintf("*№ %s / %s*", v.Episode, v.Title)
+	validMarkdown := libs.ValidateHTML(v.Description)
+	fullMessage := fmt.Sprintf("%s\n\n%s", caption, validMarkdown)
 
-	//err = telegram.SendMessage(chatId, validHtml, messageId, "")
-	//if err != nil {
-	//	return err
-	//}
+	if len(fullMessage) <= 1024 {
+		isShort = false
+		caption = fullMessage
+	}
 
-	err := telegram.SendMessage(chatId, libs.ValidateHTML(v.Description), messageId, "Markdown")
+	messageId, err := telegram.SendAudio(
+		chatId,
+		fmt.Sprintf("Хоба #%s", v.Episode), file,
+		caption)
+	if err != nil {
+		return err
+	}
+	log.Printf("[INFO] send audio")
 
-	log.Printf("send message")
+	if isShort == false {
+		log.Printf("[INFO] done send audio + text")
+		return nil
+	}
+	err = telegram.SendMessage(chatId, validMarkdown, messageId, "Markdown")
+	if err != nil {
+		return err
+	}
+	log.Printf("[INFO] send message")
 	return err
 }

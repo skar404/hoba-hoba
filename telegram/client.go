@@ -17,27 +17,33 @@ type MessageReq struct {
 	Mode             string `json:"parse_mode"`
 	Text             string `json:"text,omitempty"`
 	ReplyToMessageId *int   `json:"reply_to_message_id,omitempty"`
-
-	//Caption string `json:"caption,omitempty"`
-	//Photo   string `json:"photo,omitempty"`
-	//Video   string `json:"video,omitempty"`
 }
 
 var Client = requests.RequestClient{
 	// Указан url локального Telegram Server API чтобы убрать ограничения с размером файла для BOT API
 	Url:     fmt.Sprintf("https://telegram-api.y.ulock.org/bot%s/", os.Getenv("TG_TOKEN")),
-	Timeout: 30 * time.Second,
+	Timeout: 60 * time.Second,
 	Header: map[string][]string{
 		"Content-Type": {"application/json"},
 		"charset":      {"utf-8"},
 	},
 }
 
-func SendAudio(chatId int, fileName string, file []byte) (int, error) {
+func SendAudio(chatId int, fileName string, file []byte, caption string) (int, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 
 	err := writer.WriteField("chat_id", strconv.Itoa(chatId))
+	if err != nil {
+		return 0, err
+	}
+
+	err = writer.WriteField("caption", caption)
+	if err != nil {
+		return 0, err
+	}
+
+	err = writer.WriteField("parse_mode", "Markdown")
 	if err != nil {
 		return 0, err
 	}
