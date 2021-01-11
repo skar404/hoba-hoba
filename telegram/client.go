@@ -21,6 +21,7 @@ type MessageReq struct {
 
 var Client = requests.RequestClient{
 	// Указан url локального Telegram Server API чтобы убрать ограничения с размером файла для BOT API
+	// FIXME нужно вынести в ENV
 	Url:     fmt.Sprintf("https://telegram-api.y.ulock.org/bot%s/", os.Getenv("TG_TOKEN")),
 	Timeout: 60 * time.Second,
 	Header: map[string][]string{
@@ -117,5 +118,7 @@ func SendMessage(chatId int, text string, replyId int, mode string) error {
 	}
 	res := requests.Response{}
 	err := Client.NewRequest(&req, &res)
+
+	// FIXME доабвить обработку ошибок из тела
 	return err
 }

@@ -64,6 +64,7 @@ func main() {
 			ctx := context.Background()
 
 			for _, chatId := range chatIds {
+				// FIXME после разделения арентироваться на финальный лок
 				guid := fmt.Sprintf("epiisode:%s::chat:%d", v.Episode, chatId)
 				_, err := DB.Get(ctx, guid).Result()
 				if err != redis.Nil {
@@ -78,6 +79,9 @@ func main() {
 					log.Printf("[ERROR] send post episode=%s err=%s", v.Episode, err)
 				}
 
+				// FIXME стоит разделить лок на 2 части
+				//  audio и сообщения
+				// FIXME писать json структуры
 				if err := DB.Set(ctx, guid, fmt.Sprintf("%+v", v), 0).Err(); err != nil {
 					log.Printf("[ERROR] redis is err=%s\n", err)
 				}
@@ -132,6 +136,8 @@ func createPost(chatId int, v rss.Item) error {
 		log.Printf("[INFO] done send audio + text")
 		return nil
 	}
+
+	// FIXME при разделения лока брать от туда messageId
 	err = telegram.SendMessage(chatId, validMarkdown, messageId, "Markdown")
 	if err != nil {
 		return err
