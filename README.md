@@ -5,7 +5,7 @@ Hoba bot by Hoba podcast
 
 ```
 export TG_TOKEN=TG_TOKEN
-export CHAT_IDS=128496129
+export CHAT_IDS=123456789
 go run main.go
 ```
  
