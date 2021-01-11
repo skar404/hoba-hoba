@@ -8,6 +8,17 @@ services:
     ports:
       - "6370:6379"
 
+  telegram-api:
+    image: aiogram/telegram-bot-api:latest
+    environment:
+      # TELEGRAM_API_ID or TELEGRAM_API_HASH get in https://my.telegram.org/
+      - TELEGRAM_API_ID=
+      - TELEGRAM_API_HASH=
+
+      - TELEGRAM_FILTER=0/BOT_ID
+    ports:
+      - 8081:8081
+
   app:
     build:
       dockerfile: Dockerfile
