@@ -1,6 +1,7 @@
 package requests
 
 import (
+	"bytes"
 	"net/http"
 	"net/url"
 	"time"
@@ -12,6 +13,8 @@ type Request struct {
 	JsonBody  interface{}
 	UrlValues url.Values
 	Header    http.Header
+
+	Body *bytes.Buffer
 
 	Flags RequestFlags
 }

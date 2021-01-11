@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -20,20 +18,22 @@ func (c *RequestClient) getUrl(uri string) string {
 func (c *RequestClient) NewRequest(req *Request, res *Response) error {
 	url := c.getUrl(req.Uri)
 
-	var body io.Reader
-	if req.JsonBody != nil {
-		byteBody, err := json.Marshal(req.JsonBody)
-		if err != nil {
-			return err
-		}
-		body = bytes.NewBuffer(byteBody)
+	var body bytes.Buffer
+
+	if req.Body != nil {
+		body = *req.Body
 	} else {
-		if req.UrlValues != nil {
-			body = strings.NewReader(req.UrlValues.Encode())
+		//var body io.Reader
+		if req.JsonBody != nil {
+			byteBody, err := json.Marshal(req.JsonBody)
+			if err != nil {
+				return err
+			}
+			body = *bytes.NewBuffer(byteBody)
 		}
 	}
 
-	newReq, err := http.NewRequest(req.Method, url, body)
+	newReq, err := http.NewRequest(req.Method, url, &body)
 	if err != nil {
 		return err
 	}
@@ -64,10 +64,12 @@ func (c *RequestClient) NewRequest(req *Request, res *Response) error {
 	res.Code = resp.StatusCode
 	defer resp.Body.Close()
 
-	res.BodyRaw, err = ioutil.ReadAll(resp.Body)
+	BodyRaw, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
+
+	res.BodyRaw = BodyRaw
 
 	if req.Flags.IsBodyString {
 		res.Body = string(res.BodyRaw)
