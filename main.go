@@ -42,6 +42,8 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
+	log.Printf("[INFO]  start app")
+
 	var chatIds []int
 	{
 		chatIdsStr := strings.Split(os.Getenv("CHAT_IDS"), ",")
@@ -56,6 +58,7 @@ func main() {
 	}
 
 	for true {
+		log.Printf("[INFO]  ... loop ...")
 		rssFeed, err := rss.GetFeed()
 
 		if err != nil {
@@ -89,7 +92,7 @@ func main() {
 				}
 			}
 		}
-
+		log.Printf("[INFO]  ... sleep 15 min ... ")
 		time.Sleep(15 * time.Minute)
 	}
 }
