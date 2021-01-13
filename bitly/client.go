@@ -23,7 +23,7 @@ func CreateLink(link string) (string, error) {
 	req := requests.Request{
 		Method: http.MethodPost,
 		JsonBody: &CreateLinkReq{
-			GroupGuid: os.Getenv("SHORT_LINK_GROUP_GUID"),
+			GroupGuid: "",
 			Domain:    "bit.ly",
 			LongUrl:   link,
 		},

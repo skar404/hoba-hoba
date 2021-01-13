@@ -5,7 +5,6 @@ import (
 	"log"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/skar404/hoba-hoba/bitly"
 	"github.com/skar404/hoba-hoba/rss"
@@ -69,8 +68,6 @@ func ShortMessage(s string, isLinkName bool, isBitly bool) string {
 			// FIXME нужно вынести получения short link очень не явно что это http запрос
 			s, err := bitly.CreateLink(splitString[0])
 
-			time.Sleep(1 * time.Second)
-
 			if err != nil {
 				log.Printf("[ERROR] bitlry client, link=%s err=%s", splitString[0], err)
 			} else {
@@ -122,10 +119,11 @@ func (m *PostMessage) SetAudioText() {
 		return
 	}
 
+	var shortText string
 	for _, v := range [][]bool{{false, false}, {true, false}, {true, true}} {
-		timeCode = ShortMessage(timeCode, v[0], v[1])
-		if len(timeCode) <= MaxAudioMessage {
-			m.Audio, m.Type = timeCode, AudioAndPost
+		shortText = ShortMessage(timeCode, v[0], v[1])
+		if len(shortText) <= MaxAudioMessage {
+			m.Audio, m.Type = shortText, AudioAndPost
 			m.splitPost = remove(m.splitPost, index)
 			return
 		}

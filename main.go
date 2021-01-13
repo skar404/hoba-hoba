@@ -138,7 +138,7 @@ func createPost(chatId int, v rss.Item) error {
 		return err
 	}
 
-	log.Printf("[INFO] download audio file url=%s", v.Enclosure.URL)
+	log.Printf("[INFO] download audio file number=%s url=%s", v.Episode, v.Enclosure.URL)
 
 	post := libs.PostMessage{}
 	_ = post.Formats(v)
@@ -147,10 +147,10 @@ func createPost(chatId int, v rss.Item) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[INFO] send audio")
+	log.Printf("[INFO] send audio number=%s", v.Episode)
 
 	if post.Type == libs.OnlyAudio {
-		log.Printf("[INFO] done send audio + text")
+		log.Printf("[INFO] done send audio + text number=%s", v.Episode)
 		return nil
 	}
 
@@ -159,6 +159,6 @@ func createPost(chatId int, v rss.Item) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[INFO] send message")
+	log.Printf("[INFO] send message number=%s", v.Episode)
 	return err
 }
