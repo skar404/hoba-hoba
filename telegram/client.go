@@ -30,7 +30,7 @@ var Client = requests.RequestClient{
 	},
 }
 
-func SendAudio(chatId int, fileName string, file []byte, caption string) (int, error) {
+func SendAudio(chatId int, fileName string, file []byte, caption string, duration string) (int, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 
@@ -44,7 +44,12 @@ func SendAudio(chatId int, fileName string, file []byte, caption string) (int, e
 		return 0, err
 	}
 
-	err = writer.WriteField("parse_mode", "Markdown")
+	err = writer.WriteField("duration", duration)
+	if err != nil {
+		return 0, err
+	}
+
+	err = writer.WriteField("parse_mode", "Markdown") // "Markdown")
 	if err != nil {
 		return 0, err
 	}

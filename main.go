@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/tcolgate/mp3"
 
 	"github.com/skar404/hoba-hoba/libs"
 	"github.com/skar404/hoba-hoba/requests"
@@ -73,7 +76,6 @@ func main() {
 					}
 					continue
 				}
-
 				err = createPost(chatId, v)
 				if err != nil {
 					log.Printf("[ERROR] send post episode=%s err=%s", v.Episode, err)
@@ -92,6 +94,29 @@ func main() {
 	}
 }
 
+func getAudioDuration(file []byte) string {
+	t := 0.0
+	skipped := 0
+	r := bytes.NewReader(file)
+	d := mp3.NewDecoder(r)
+
+	var f mp3.Frame
+	for {
+
+		if err := d.Decode(&f, &skipped); err != nil {
+			if err == io.EOF {
+				break
+			}
+			log.Printf("[ERROR] get duration file err=%s, ", err)
+			return "10800"
+		}
+
+		t = t + f.Duration().Seconds()
+	}
+
+	return fmt.Sprintf("%.0f", t)
+}
+
 func downloadAudioFile(url string) ([]byte, error) {
 	req := requests.Request{
 		Method: http.MethodGet,
@@ -103,7 +128,8 @@ func downloadAudioFile(url string) ([]byte, error) {
 }
 
 func FakeFile(url string) ([]byte, error) {
-	return ioutil.ReadFile("test_file.mp3")
+	//return ioutil.ReadFile("test_file.mp3")
+	return ioutil.ReadFile("test_file_big.mp3")
 }
 
 func createPost(chatId int, v rss.Item) error {
@@ -111,34 +137,25 @@ func createPost(chatId int, v rss.Item) error {
 	if err != nil {
 		return err
 	}
+
 	log.Printf("[INFO] download audio file url=%s", v.Enclosure.URL)
 
-	isShort := true
-	caption := fmt.Sprintf("*№ %s / %s*", v.Episode, v.Title)
-	validMarkdown := libs.ValidateHTML(v.Description)
-	fullMessage := fmt.Sprintf("%s\n\n%s", caption, validMarkdown)
+	post := libs.PostMessage{}
+	_ = post.Formats(v)
 
-	if len(fullMessage) <= 1024 {
-		isShort = false
-		caption = fullMessage
-	}
-
-	messageId, err := telegram.SendAudio(
-		chatId,
-		fmt.Sprintf("Хоба #%s", v.Episode), file,
-		caption)
+	messageId, err := telegram.SendAudio(chatId, post.FileName, file, post.Audio, getAudioDuration(file))
 	if err != nil {
 		return err
 	}
 	log.Printf("[INFO] send audio")
 
-	if isShort == false {
+	if post.Type == libs.OnlyAudio {
 		log.Printf("[INFO] done send audio + text")
 		return nil
 	}
 
 	// FIXME при разделения лока брать от туда messageId
-	err = telegram.SendMessage(chatId, validMarkdown, messageId, "Markdown")
+	err = telegram.SendMessage(chatId, post.Post, messageId, "Markdown")
 	if err != nil {
 		return err
 	}
