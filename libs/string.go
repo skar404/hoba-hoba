@@ -35,6 +35,8 @@ type PostMessage struct {
 
 	fullPostMarkdown string
 	splitPost        []string
+
+	V rss.Item
 }
 
 func SearchTimeCondeText(ss []string) (string, int, int) {
@@ -85,53 +87,25 @@ func ShortMessage(s string, isLinkName bool, isBitly bool) string {
 }
 
 func (m *PostMessage) Formats(v rss.Item) error {
-	m.FileName = fmt.Sprintf("Хоба #%s", v.Episode)
-
-	m.fullPostMarkdown = ValidateHTML(v.Description)
+	m.fullPostMarkdown = ValidateHTML(m.V.Description)
 	m.splitPost = strings.Split(m.fullPostMarkdown, "\\*\\*\\*")
 	m.SetAudioText()
-
-	if m.Type == OnlyAudio {
-		return nil
-	}
-
 	m.SetPostText()
 
 	return nil
 }
 
 func (m *PostMessage) SetAudioText() {
-	m.Type = OnlyPost
-
-	if len(m.fullPostMarkdown) <= 1024 {
-		m.Audio, m.Type = m.fullPostMarkdown, OnlyAudio
-		return
-	}
-
-	timeCode, c, index := SearchTimeCondeText(m.splitPost)
-	if c < 2 {
-		return
-	}
-
-	if len(timeCode) <= MaxAudioMessage {
-		m.Audio, m.Type = timeCode, AudioAndPost
-		m.splitPost = remove(m.splitPost, index)
-		return
-	}
-
-	var shortText string
-	for _, v := range [][]bool{{false, false}, {true, false}, {true, true}} {
-		shortText = ShortMessage(timeCode, v[0], v[1])
-		if len(shortText) <= MaxAudioMessage {
-			m.Audio, m.Type = shortText, AudioAndPost
-			m.splitPost = remove(m.splitPost, index)
-			return
-		}
-	}
-
-	return
+	m.FileName = fmt.Sprintf("Хоба #%s", m.V.Episode)
+	m.Audio = fmt.Sprintf("*%s*", m.V.Title)
 }
 
 func (m *PostMessage) SetPostText() {
+	// ищем блок с темами и сокрашаемм ссылки
+	timeCode, c, index := SearchTimeCondeText(m.splitPost)
+	if c > 2 {
+		m.splitPost[index] = ShortMessage(timeCode, true, true)
+	}
+
 	m.Post = strings.Join(m.splitPost, "\\*\\*\\*")
 }

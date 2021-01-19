@@ -143,7 +143,7 @@ func createPost(chatId int, v rss.Item) error {
 
 	log.Printf("[INFO] download audio file number=%s url=%s", v.Episode, v.Enclosure.URL)
 
-	post := libs.PostMessage{}
+	post := libs.PostMessage{V: v}
 	_ = post.Formats(v)
 
 	messageId, err := telegram.SendAudio(chatId, post.FileName, file, post.Audio, getAudioDuration(file))
