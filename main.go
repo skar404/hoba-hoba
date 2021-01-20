@@ -8,14 +8,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/tcolgate/mp3"
 
+	"github.com/skar404/hoba-hoba/global"
 	"github.com/skar404/hoba-hoba/libs"
 	"github.com/skar404/hoba-hoba/requests"
 	"github.com/skar404/hoba-hoba/rss"
@@ -28,28 +28,33 @@ var FileClient = requests.RequestClient{
 }
 
 var DB = redis.NewClient(&redis.Options{
-	Addr:     getEnv("DB_HOST", "localhost:6370"),
+	Addr:     global.DBHost,
 	Password: "", // no password set
 	DB:       1,  // use default DB
 })
 
-func getEnv(key, fallback string) string {
-	value := os.Getenv(key)
-	if len(value) == 0 {
-		return fallback
-	}
-	return value
-}
-
 func main() {
 	log.Printf("[INFO]  start app")
 
+	if global.SentryDsn != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn: global.SentryDsn,
+		}); err != nil {
+			log.Fatalf("[PANIC] sentry.Init: %s", err)
+		} else {
+			log.Printf("[INFO] sentry init")
+		}
+	}
+	// Flush buffered events before the program terminates.
+	defer sentry.Flush(2 * time.Second)
+
 	var chatIds []int
 	{
-		chatIdsStr := strings.Split(os.Getenv("CHAT_IDS"), ",")
+		chatIdsStr := global.ChatIds
 		for _, v := range chatIdsStr {
 			i, err := strconv.Atoi(v)
 			if err != nil {
+				sentry.CaptureException(fmt.Errorf("not valid CHAT_IDS: %+v, err: %s", chatIdsStr, err))
 				log.Panicf("[PANIC] not valid CHAT_IDS, %+v", chatIdsStr)
 			}
 
@@ -62,6 +67,7 @@ func main() {
 		rssFeed, err := rss.GetFeed()
 
 		if err != nil {
+			sentry.CaptureException(fmt.Errorf("get feed err=%s", err))
 			log.Printf("[ERROR] get feed err=%s", err)
 			continue
 		}
@@ -75,12 +81,14 @@ func main() {
 				_, err := DB.Get(ctx, guid).Result()
 				if err != redis.Nil {
 					if err != nil {
+						sentry.CaptureException(fmt.Errorf("conn to Redis err=%s", err))
 						log.Printf("[ERROR] conn to Redis err=%s", err)
 					}
 					continue
 				}
 				err = createPost(chatId, v)
 				if err != nil {
+					sentry.CaptureException(fmt.Errorf("send post episode=%s err=%s", v.Episode, err))
 					log.Printf("[ERROR] send post episode=%s err=%s", v.Episode, err)
 				}
 
@@ -88,6 +96,7 @@ func main() {
 				//  audio и сообщения
 				// FIXME писать json структуры
 				if err := DB.Set(ctx, guid, fmt.Sprintf("%+v", v), 0).Err(); err != nil {
+					sentry.CaptureException(fmt.Errorf("redis is err=%s", err))
 					log.Printf("[ERROR] redis is err=%s\n", err)
 				}
 			}
@@ -105,11 +114,11 @@ func getAudioDuration(file []byte) string {
 
 	var f mp3.Frame
 	for {
-
 		if err := d.Decode(&f, &skipped); err != nil {
 			if err == io.EOF {
 				break
 			}
+			sentry.CaptureException(fmt.Errorf("get duration file err=%s", err))
 			log.Printf("[ERROR] get duration file err=%s, ", err)
 			return "10800"
 		}

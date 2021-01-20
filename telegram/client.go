@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
+	"github.com/skar404/hoba-hoba/global"
 	"github.com/skar404/hoba-hoba/requests"
 )
 
@@ -22,7 +22,7 @@ type MessageReq struct {
 var Client = requests.RequestClient{
 	// Указан url локального Telegram Server API чтобы убрать ограничения с размером файла для BOT API
 	// FIXME нужно вынести в ENV
-	Url:     fmt.Sprintf("https://telegram-api.y.ulock.org/bot%s/", os.Getenv("TG_TOKEN")),
+	Url:     fmt.Sprintf("https://telegram-api.y.ulock.org/bot%s/", global.TGToken),
 	Timeout: 60 * time.Second,
 	Header: map[string][]string{
 		"Content-Type": {"application/json"},

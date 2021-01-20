@@ -3,9 +3,9 @@ package bitly
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/skar404/hoba-hoba/global"
 	"github.com/skar404/hoba-hoba/requests"
 )
 
@@ -14,7 +14,7 @@ var Client = requests.RequestClient{
 	Timeout: 10 * time.Second,
 	Header: map[string][]string{
 		"Content-Type":  {"application/json"},
-		"Authorization": {fmt.Sprintf("Bearer %s", os.Getenv("SHORT_LINK_TOKEN"))},
+		"Authorization": {fmt.Sprintf("Bearer %s", global.BitlyToken)},
 	},
 }
 

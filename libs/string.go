@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/getsentry/sentry-go"
+
 	"github.com/skar404/hoba-hoba/bitly"
 	"github.com/skar404/hoba-hoba/rss"
 )
@@ -71,6 +73,7 @@ func ShortMessage(s string, isLinkName bool, isBitly bool) string {
 			s, err := bitly.CreateLink(splitString[0])
 
 			if err != nil {
+				sentry.CaptureException(fmt.Errorf("bitlry client, link=%s err=%s", splitString[0], err))
 				log.Printf("[ERROR] bitlry client, link=%s err=%s", splitString[0], err)
 			} else {
 				return s
