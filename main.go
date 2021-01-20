@@ -34,7 +34,7 @@ var DB = redis.NewClient(&redis.Options{
 })
 
 func main() {
-	log.Printf("[INFO]  start app")
+	log.Printf("[INFO] start app")
 
 	if global.SentryDsn != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -61,6 +61,8 @@ func main() {
 			chatIds = append(chatIds, i)
 		}
 	}
+
+	log.Printf("[INFO] app config chats_ids=%+v, ", chatIds)
 
 	for true {
 		date := time.Now()
