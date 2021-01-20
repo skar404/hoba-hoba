@@ -63,6 +63,13 @@ func main() {
 	}
 
 	for true {
+		date := time.Now()
+		hour := date.Hour()
+		if (date.Weekday() == time.Monday && (hour > 1 || hour < 3)) == false {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+
 		log.Printf("[INFO]  ... loop ...")
 		rssFeed, err := rss.GetFeed()
 
