@@ -112,8 +112,8 @@ func main() {
 				}
 			}
 		}
-		log.Printf("[INFO]  ... sleep 15 min ... ")
-		time.Sleep(15 * time.Minute)
+		log.Printf("[INFO]  ... sleep 1 min ... ")
+		time.Sleep(1 * time.Minute)
 	}
 }
 
