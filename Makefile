@@ -1,4 +1,4 @@
-VERSION:=0.2.8
+VERSION:=0.2.9
 IMAGE:=cr.yandex/crpkmcbem8um7rd1gk5i/hoba-hoba-bot
 
 build:

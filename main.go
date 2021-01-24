@@ -69,7 +69,7 @@ func main() {
 		hour := date.Hour()
 
 		// пост в понедельник в 01:00 по МСК, то есть в субботу с 22 по UTC
-		if (date.Weekday() == time.Sunday && (hour > 22 || hour < 24)) == false {
+		if (date.Weekday() == time.Sunday && hour >= 22 && hour <= 24) == false {
 			time.Sleep(1 * time.Second)
 			continue
 		}
