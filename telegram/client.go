@@ -30,21 +30,21 @@ var Client = requests.RequestClient{
 	},
 }
 
-func SendAudio(chatId int, fileName string, file []byte, caption string, duration string) (int, error) {
+func SendAudio(args SendAudioArgs) (int, error) {
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
 
-	err := writer.WriteField("chat_id", strconv.Itoa(chatId))
+	err := writer.WriteField("chat_id", strconv.Itoa(args.ChatId))
 	if err != nil {
 		return 0, err
 	}
 
-	err = writer.WriteField("caption", caption)
+	err = writer.WriteField("caption", args.Caption)
 	if err != nil {
 		return 0, err
 	}
 
-	err = writer.WriteField("duration", duration)
+	err = writer.WriteField("duration", args.Duration)
 	if err != nil {
 		return 0, err
 	}
@@ -54,12 +54,31 @@ func SendAudio(chatId int, fileName string, file []byte, caption string, duratio
 		return 0, err
 	}
 
-	part, err := writer.CreateFormFile("audio", fileName)
+	err = writer.WriteField("performer", args.Performer) // "Markdown")
+	if err != nil {
+		return 0, err
+	}
+	err = writer.WriteField("title", args.Title) // "Markdown")
 	if err != nil {
 		return 0, err
 	}
 
-	_, err = part.Write(file)
+	part, err := writer.CreateFormFile("thumb", "logo.jpg")
+	if err != nil {
+		return 0, err
+	}
+
+	_, err = part.Write(args.LogoFile)
+	if err != nil {
+		return 0, err
+	}
+
+	part, err = writer.CreateFormFile("audio", args.FileName)
+	if err != nil {
+		return 0, err
+	}
+
+	_, err = part.Write(args.File)
 	if err != nil {
 		return 0, err
 	}

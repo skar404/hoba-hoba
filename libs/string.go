@@ -29,9 +29,12 @@ const (
 )
 
 type PostMessage struct {
-	FileName string // Название файла
-	Audio    string // Текст аудио
-	Post     string // Текст сообщения для telegram
+	FileName  string // Название файла
+	Audio     string // Текст аудио
+	Title     string
+	Performer string
+
+	Post string // Текст сообщения для telegram
 
 	Type PostType
 
@@ -101,6 +104,10 @@ func (m *PostMessage) Formats(v rss.Item) error {
 func (m *PostMessage) SetAudioText() {
 	m.FileName = fmt.Sprintf("Хоба #%s", m.V.Episode)
 	m.Audio = fmt.Sprintf("*%s*", m.V.Title)
+
+	m.Title = fmt.Sprintf("выпуск № %s, сезон № 1", m.V.Episode)
+	m.Performer = "Хоба!"
+
 }
 
 func (m *PostMessage) SetPostText() {

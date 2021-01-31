@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"context"
+	"embed"
+	_ "embed"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -33,8 +35,13 @@ var DB = redis.NewClient(&redis.Options{
 	DB:       1,  // use default DB
 })
 
+//go:embed img/logo.jpg
+var f embed.FS
+
 func main() {
 	log.Printf("[INFO] start app")
+
+	debugMode := false
 
 	if global.SentryDsn != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -69,7 +76,7 @@ func main() {
 		hour := date.Hour()
 
 		// пост в понедельник в 01:00 по МСК, то есть в субботу с 22 по UTC
-		if (date.Weekday() == time.Sunday && hour >= 22 && hour <= 24) == false {
+		if (date.Weekday() == time.Sunday && hour >= 22 && hour <= 24) == false && debugMode == false {
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -166,7 +173,17 @@ func createPost(chatId int, v rss.Item) error {
 	post := libs.PostMessage{V: v}
 	_ = post.Formats(v)
 
-	messageId, err := telegram.SendAudio(chatId, post.FileName, file, post.Audio, getAudioDuration(file))
+	logoFile, _ := f.ReadFile("img/logo.jpg")
+	messageId, err := telegram.SendAudio(telegram.SendAudioArgs{
+		ChatId:    chatId,
+		FileName:  post.FileName,
+		File:      file,
+		Caption:   post.Audio,
+		Duration:  getAudioDuration(file),
+		Title:     post.Title,
+		Performer: post.Performer,
+		LogoFile:  logoFile,
+	})
 	if err != nil {
 		return err
 	}

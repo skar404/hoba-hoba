@@ -35,3 +35,15 @@ type AudioResponse struct {
 	Date       int        `json:"date"`
 	Audio      Audio      `json:"audio"`
 }
+
+type SendAudioArgs struct {
+	ChatId   int
+	FileName string
+	File     []byte
+	LogoFile []byte
+	Caption  string
+
+	Duration  string
+	Title     string
+	Performer string
+}
