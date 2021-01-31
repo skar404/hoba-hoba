@@ -102,7 +102,7 @@ func (m *PostMessage) Formats(v rss.Item) error {
 }
 
 func (m *PostMessage) SetAudioText() {
-	m.FileName = fmt.Sprintf("Хоба #%s", m.V.Episode)
+	m.FileName = fmt.Sprintf("Хоба #%s.mp3", m.V.Episode)
 	m.Audio = fmt.Sprintf("*%s*", m.V.Title)
 
 	m.Title = fmt.Sprintf("выпуск № %s, сезон № 1", m.V.Episode)
