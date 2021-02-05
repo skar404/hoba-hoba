@@ -41,7 +41,7 @@ var f embed.FS
 func main() {
 	log.Printf("[INFO] start app")
 
-	debugMode := false
+	debugMode := global.Debug
 
 	if global.SentryDsn != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -165,7 +165,7 @@ func FakeFile(url string) ([]byte, error) {
 func createPost(chatId int, v rss.Item) error {
 	file, err := downloadAudioFile(v.Enclosure.URL)
 	if err != nil {
-		return err
+		return fmt.Errorf("downloadAudioFile err=%e", err)
 	}
 
 	log.Printf("[INFO] download audio file number=%s url=%s", v.Episode, v.Enclosure.URL)
@@ -185,7 +185,7 @@ func createPost(chatId int, v rss.Item) error {
 		LogoFile:  logoFile,
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("SendAudio err=%e", err)
 	}
 	log.Printf("[INFO] send audio number=%s", v.Episode)
 
@@ -197,8 +197,8 @@ func createPost(chatId int, v rss.Item) error {
 	// FIXME при разделения лока брать от туда messageId
 	err = telegram.SendMessage(chatId, post.Post, messageId, "Markdown")
 	if err != nil {
-		return err
+		return fmt.Errorf("SendMessage err=%e", err)
 	}
-	log.Printf("[INFO] send message number=%s", v.Episode)
+	log.Printf("[INFO] send message number=%e", v.Episode)
 	return err
 }

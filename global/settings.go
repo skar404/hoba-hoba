@@ -2,11 +2,13 @@ package global
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
 var (
 	SentryDsn = os.Getenv("SENTRY_DSN")
+	Debug, _  = strconv.ParseBool(getEnv("DEBUG", "false"))
 
 	TGToken    = os.Getenv("TG_TOKEN")
 	BitlyToken = os.Getenv("SHORT_LINK_TOKEN")

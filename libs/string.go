@@ -14,6 +14,7 @@ import (
 
 var TimeCodeRegexp = regexp.MustCompile("(\\d+:)+\\d+")
 var MarkdownLinkRegexp = regexp.MustCompile("\\[(?P<name>.+)]\\((?P<link>.+)\\)")
+var UrlRegexp = regexp.MustCompile("(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?\\.?")
 
 type PostType int
 
@@ -92,8 +93,24 @@ func ShortMessage(s string, isLinkName bool, isBitly bool) string {
 	return rs
 }
 
+// fixLink
+// исправляет ошибку когда url заканчивается на . из-за этого они не работают
+func fixLink(s string) string {
+	rs := UrlRegexp.ReplaceAllStringFunc(s, func(s string) string {
+		lastIndex := len(s) - 1
+		oneLink := string(s[lastIndex])
+
+		if oneLink == "." {
+			s = s[:lastIndex]
+			fmt.Printf("%s\n", oneLink)
+		}
+		return s
+	})
+	return rs
+}
+
 func (m *PostMessage) Formats(v rss.Item) error {
-	m.fullPostMarkdown = ValidateHTML(m.V.Description)
+	m.fullPostMarkdown = ValidateHTML(fixLink(m.V.Description))
 	m.splitPost = strings.Split(m.fullPostMarkdown, "\\*\\*\\*")
 	m.SetAudioText()
 	m.SetPostText()
