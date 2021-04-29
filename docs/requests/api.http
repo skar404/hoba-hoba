@@ -1,0 +1,21 @@
+###
+GET {{host}}api/podcasts
+Content-Type: application/json
+
+###
+POST {{host}}api/podcasts
+Content-Type: application/json
+
+{
+  "id": 999,
+  "value": "content"
+}
+
+
+###
+PATCH {{host}}api/podcasts
+Content-Type: application/json
+
+###
+DELETE {{host}}api/podcasts
+Content-Type: application/json
