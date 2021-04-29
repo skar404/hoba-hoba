@@ -1,11 +1,14 @@
 import asyncio
 
+import aiohttp_cors
 import uvloop
 from aiohttp import web
+from aiohttp_graphql import GraphQLView
+from graphql.execution.executors.asyncio import AsyncioExecutor
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from core import App
-from handlers import api
+from handlers.schema import MainSchema
 
 
 async def setup_db():
@@ -17,21 +20,33 @@ async def setup_db():
 
 def main():
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-
     loop = asyncio.get_event_loop()
 
     app = App()
-    app.add_routes([
-        # CRUD по работе с подкастом
-        web.post('/api/podcasts', api.create_podcast),
-        web.patch('/api/podcasts', api.create_podcast),
-        web.delete('/api/podcasts', api.create_podcast),
-        web.get('/api/podcasts', api.create_podcast),
-    ])
+
+    gql_view = GraphQLView(
+        schema=MainSchema,
+        graphiql=True,
+        enable_async=True,
+        batch=True,
+        executor=AsyncioExecutor(loop=asyncio.get_event_loop()))
+
+    for m in ['GET', 'POST']:
+        app.router.add_route(m, '/graphql', gql_view, name='graphql')
 
     app.DB = loop.run_until_complete(setup_db())
 
-    web.run_app(app)
+    cors = aiohttp_cors.setup(app, defaults={
+        '*': aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers='*',
+            allow_headers=('Content-Type',),
+        )
+    })
+    for route in list(app.router.routes()):
+        cors.add(route)
+
+    web.run_app(app, port=8000)
 
 
 if __name__ == '__main__':
