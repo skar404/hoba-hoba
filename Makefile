@@ -1,11 +1,5 @@
-VERSION:=0.2.13
-IMAGE:=cr.yandex/crpkmcbem8um7rd1gk5i/hoba-hoba-bot
+run:
+	uvicorn backend.main:app
 
-build:
-	docker build . -t ${IMAGE}:${VERSION} -t ${IMAGE}
-
-push:
-	docker push ${IMAGE}:${VERSION}
-	docker push ${IMAGE}
-
-deploy: build push
+run_reload:
+	uvicorn backend.main:app --reload

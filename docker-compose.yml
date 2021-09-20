@@ -1,6 +1,7 @@
 version: "3.3"
 
 services:
+  # only prod
   telegram-api:
     image: aiogram/telegram-bot-api:latest
     environment:

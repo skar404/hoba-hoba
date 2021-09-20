@@ -7,14 +7,8 @@ license = "GPL-3.0 License"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-motor = "^2.3.1"
-pydantic = "^1.8.1"
-uvloop = "^0.15.2"
-aiohttp = "^3.7.4"
-cchardet = "^2.1.7"
-aiodns = "^2.0.0"
-aiohttp-graphql = "^1.1.0"
-aiohttp_cors = "^0.7.0"
+fastapi = "^0.68.1"
+uvicorn = "^0.15.0"
 
 [tool.poetry.dev-dependencies]
 
