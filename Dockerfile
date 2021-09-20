@@ -1,21 +1,9 @@
-FROM golang:1.16rc1-alpine as builder
+FROM python:3.9.7-bullseye
 
-WORKDIR /app
+WORKDIR app
 
-COPY go.mod go.sum /app/
-RUN go mod download
+RUN pip install poetry
 
-COPY . .
-RUN go build -o bin/app
-
-FROM alpine:3.12
-
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /root/
-
-COPY --from=builder /app/bin/app /usr/local/bin/
-
-EXPOSE 1323
-
-CMD ["app"]
+COPY poetry.lock .
+COPY pyproject.toml .
+RUN poetry install

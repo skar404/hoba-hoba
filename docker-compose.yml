@@ -1,13 +1,7 @@
 version: "3.3"
 
 services:
-  redis:
-    image: redis:latest
-    container_name: redis
-    restart: always
-    ports:
-      - "6370:6379"
-
+  # only prod
   telegram-api:
     image: aiogram/telegram-bot-api:latest
     environment:
@@ -19,9 +13,11 @@ services:
     ports:
       - 8081:8081
 
-  app:
-    build:
-      dockerfile: Dockerfile
+  mongo:
+    image: mongo:latest
+    restart: always
+    ports:
+    - 27017:27017
     environment:
-      - TG_TOKEN=""
-      - CHAT_ID=1234,1235
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
