@@ -63,7 +63,7 @@ func SendAudio(args SendAudioArgs) (int, error) {
 		return 0, err
 	}
 
-	part, err := writer.CreateFormFile("thumb", "hoba.jpg")
+	part, err := writer.CreateFormFile("thumb", "logo.jpg")
 	if err != nil {
 		return 0, err
 	}
