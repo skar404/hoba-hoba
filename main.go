@@ -35,7 +35,9 @@ var DB = redis.NewClient(&redis.Options{
 	DB:       1,  // use default DB
 })
 
-//go:embed img/logo.jpg
+// FIXME
+//go:embed img/already_not_still.jpg
+//go:embed img/hoba.jpg
 var f embed.FS
 
 func main() {
@@ -173,7 +175,8 @@ func createPost(chatId int, v rss.Item) error {
 	post := libs.PostMessage{V: v}
 	_ = post.Formats(v)
 
-	logoFile, _ := f.ReadFile("img/logo.jpg")
+	logoFile, _ := f.ReadFile(fmt.Sprintf("img/%s.jpg", global.ImgName))
+
 	messageId, err := telegram.SendAudio(telegram.SendAudioArgs{
 		ChatId:    chatId,
 		FileName:  post.FileName,
