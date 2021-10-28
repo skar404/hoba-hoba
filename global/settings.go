@@ -16,9 +16,10 @@ var (
 
 	DBHost = getEnv("DB_HOST", "localhost:6370")
 
-	FeedUrl = os.Getenv("FEED_URL")
-	ImgName = os.Getenv("IMG_NAME")
-	Name    = os.Getenv("NAME")
+	FeedUrl     = os.Getenv("FEED_URL")
+	ImgName     = os.Getenv("IMG_NAME")
+	Name        = os.Getenv("NAME")
+	Interval, _ = strconv.ParseBool(os.Getenv("INTERVAL"))
 )
 
 func getEnv(key, fallback string) string {
