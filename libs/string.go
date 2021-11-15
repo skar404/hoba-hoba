@@ -2,6 +2,7 @@ package libs
 
 import (
 	"fmt"
+	"github.com/skar404/hoba-hoba/global"
 	"log"
 	"regexp"
 	"strings"
@@ -119,12 +120,14 @@ func (m *PostMessage) Formats(v rss.Item) error {
 }
 
 func (m *PostMessage) SetAudioText() {
-	m.FileName = fmt.Sprintf("Хоба #%s.mp3", m.V.Episode)
+	m.FileName = fmt.Sprintf("%s #%s.mp3", global.Name, m.V.Episode)
 	m.Audio = fmt.Sprintf("*%s*", m.V.Title)
 
-	m.Title = fmt.Sprintf("выпуск № %s, сезон № 1", m.V.Episode)
-	m.Performer = "Хоба!"
-
+	m.Title = fmt.Sprintf("Пилот, сезон № 1")
+	if m.V.Episode != "" {
+		m.Title = fmt.Sprintf("выпуск № %s, сезон № 1", m.V.Episode)
+	}
+	m.Performer = global.Name
 }
 
 func (m *PostMessage) SetPostText() {

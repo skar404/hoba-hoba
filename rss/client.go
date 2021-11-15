@@ -2,13 +2,14 @@ package rss
 
 import (
 	"encoding/xml"
+	"github.com/skar404/hoba-hoba/global"
 	"time"
 
 	"github.com/skar404/hoba-hoba/requests"
 )
 
 var Feed = requests.RequestClient{
-	Url:     "https://feeds.simplecast.com/jWytY2EF",
+	Url:     global.FeedUrl,
 	Timeout: 1 * time.Second,
 	Header: map[string][]string{
 		"Content-Type": {"application/json"},
