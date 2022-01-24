@@ -123,9 +123,10 @@ func (m *PostMessage) SetAudioText() {
 	m.FileName = fmt.Sprintf("%s #%s.mp3", global.Name, m.V.Episode)
 	m.Audio = fmt.Sprintf("*%s*", m.V.Title)
 
-	m.Title = fmt.Sprintf("Пилот, сезон № 1")
+	m.Title = fmt.Sprintf("Выпуск без номер")
+
 	if m.V.Episode != "" {
-		m.Title = fmt.Sprintf("выпуск № %s, сезон № 1", m.V.Episode)
+		m.Title = fmt.Sprintf("выпуск № %s, сезон № %s", m.V.Episode, m.V.Season)
 	}
 	m.Performer = global.Name
 }

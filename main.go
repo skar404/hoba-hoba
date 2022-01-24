@@ -100,7 +100,13 @@ func main() {
 
 			for _, chatId := range chatIds {
 				// FIXME после разделения арентироваться на финальный лок
-				guid := fmt.Sprintf("epiisode:%s::chat:%d", v.Episode, chatId)
+
+				season := ""
+				if v.Season != "1" {
+					season = v.Season
+				}
+				guid := fmt.Sprintf("epiisode:%s:%s:chat:%d", v.Episode, season, chatId)
+
 				_, err := DB.Get(ctx, guid).Result()
 				if err != redis.Nil {
 					if err != nil {

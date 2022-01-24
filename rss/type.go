@@ -81,4 +81,5 @@ type Item struct {
 	Explicit    string `xml:"explicit"`
 	EpisodeType string `xml:"episodeType"`
 	Episode     string `xml:"episode"`
+	Season      string `xml:"season"`
 }
