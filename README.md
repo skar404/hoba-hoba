@@ -33,7 +33,9 @@ Content:
 Item:
     uuid: uuid 
     content_uuid: -> Content
-    
+  
+    type: Enum[user, feed]
+  
     data:
         name: str
         title: str

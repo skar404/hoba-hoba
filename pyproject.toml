@@ -10,6 +10,8 @@ python = "^3.10.0"
 fastapi = "^0.73.0"
 uvicorn = "^0.16.0"
 motor = "^2.5.1"
+uvloop = "^0.16.0"
+aiomonitor = "^0.4.5"
 
 [tool.poetry.dev-dependencies]
 
