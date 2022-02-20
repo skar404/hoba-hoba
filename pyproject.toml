@@ -12,6 +12,9 @@ uvicorn = "^0.16.0"
 motor = "^2.5.1"
 uvloop = "^0.16.0"
 aiomonitor = "^0.4.5"
+aiohttp = "^3.8.1"
+cchardet = "^2.1.7"
+aiodns = "^3.0.0"
 
 [tool.poetry.dev-dependencies]
 
