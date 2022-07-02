@@ -5,6 +5,7 @@ import (
 	"context"
 	"embed"
 	_ "embed"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -39,6 +40,9 @@ var DB = redis.NewClient(&redis.Options{
 //go:embed img/already_not_still.jpg
 //go:embed img/hoba.jpg
 var f embed.FS
+
+var DownloadFileErr = errors.New("error download audio")
+var SendAudioErr = errors.New("error send audio")
 
 func main() {
 	log.Printf("[INFO] start app")
@@ -119,6 +123,10 @@ func main() {
 				if err != nil {
 					sentry.CaptureException(fmt.Errorf("send post episode=%s err=%s", v.Episode, err))
 					log.Printf("[ERROR] send post episode=%s err=%s", v.Episode, err)
+
+					if errors.Is(err, DownloadFileErr) || errors.Is(err, SendAudioErr) {
+						continue
+					}
 				}
 
 				// FIXME стоит разделить лок на 2 части
@@ -176,7 +184,7 @@ func FakeFile(url string) ([]byte, error) {
 func createPost(chatId int, v rss.Item) error {
 	file, err := downloadAudioFile(v.Enclosure.URL)
 	if err != nil {
-		return fmt.Errorf("downloadAudioFile err=%e", err)
+		return DownloadFileErr
 	}
 
 	log.Printf("[INFO] download audio file number=%s url=%s", v.Episode, v.Enclosure.URL)
@@ -197,7 +205,7 @@ func createPost(chatId int, v rss.Item) error {
 		LogoFile:  logoFile,
 	})
 	if err != nil {
-		return fmt.Errorf("SendAudio err=%e", err)
+		return SendAudioErr
 	}
 	log.Printf("[INFO] send audio number=%s", v.Episode)
 
