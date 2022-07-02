@@ -63,27 +63,30 @@ async def get_feed(c: Content):
 
 
 async def main():
-    print(f'run app pid={os.getpid()} db_id={id(DB)}')
+    loop = asyncio.get_event_loop()
 
-    index = 0
-    while True:
-        for i in DB.items:
-            # проверка что задачка не упала
-            if i.task and i.task.cancelled():
-                print(f'task is cancelled {i.url} {i.index=}')
-                i.is_run = False
+    with aiomonitor.start_monitor(loop=loop):
+        print(f'run app pid={os.getpid()} db_id={id(DB)}')
 
-            # запускаем задачки
-            if not i.is_run:
-                task = asyncio.ensure_future(get_feed(i))
-                print(f'run crawler {i.url} {index=} task_id={id(task)}')
-                task.set_name(f'crawler {i.url} {index=}')
-                i.task = task
-                i.is_run = True
-                i.index = index
-                index += 1
+        index = 0
+        while True:
+            for i in DB.items:
+                # проверка что задачка не упала
+                if i.task and i.task.cancelled():
+                    print(f'task is cancelled {i.url} {i.index=}')
+                    i.is_run = False
 
-        await asyncio.sleep(Config.Sleep.main_task)
+                # запускаем задачки
+                if not i.is_run:
+                    task = asyncio.ensure_future(get_feed(i))
+                    print(f'run crawler {i.url} {index=} task_id={id(task)}')
+                    task.set_name(f'crawler {i.url} {index=}')
+                    i.task = task
+                    i.is_run = True
+                    i.index = index
+                    index += 1
+
+            await asyncio.sleep(Config.Sleep.main_task)
 
 
 def debug_db(db_id):
@@ -99,8 +102,4 @@ def debug_db(db_id):
 
 if __name__ == '__main__':
     uvloop.install()
-
-    loop = asyncio.new_event_loop()
-    with aiomonitor.start_monitor(loop=loop):
-        loop.create_task(main(), name='main')
-        loop.run_forever()
+    asyncio.run(main())
