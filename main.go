@@ -27,7 +27,7 @@ import (
 
 var FileClient = requests.RequestClient{
 	Url:     "",
-	Timeout: 10 * time.Second,
+	Timeout: 60 * time.Second,
 }
 
 var DB = redis.NewClient(&redis.Options{
@@ -109,7 +109,12 @@ func main() {
 				if v.Season != "1" {
 					season = v.Season
 				}
+
+				// лучше так не делать .... :с
 				guid := fmt.Sprintf("epiisode:%s:%s:chat:%d", v.Episode, season, chatId)
+				if v.Episode == "" {
+					guid = fmt.Sprintf("guid:%s:%d", v.Guid.Text, chatId)
+				}
 
 				_, err := DB.Get(ctx, guid).Result()
 				if err != redis.Nil {
