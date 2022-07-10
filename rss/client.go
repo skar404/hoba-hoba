@@ -10,7 +10,7 @@ import (
 
 var Feed = requests.RequestClient{
 	Url:     global.FeedUrl,
-	Timeout: 1 * time.Second,
+	Timeout: 10 * time.Second,
 	Header: map[string][]string{
 		"Content-Type": {"application/json"},
 		"charset":      {"utf-8"},
