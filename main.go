@@ -39,6 +39,7 @@ var DB = redis.NewClient(&redis.Options{
 // FIXME
 //go:embed img/already_not_still.jpg
 //go:embed img/hoba.jpg
+//go:embed img/hoba-prime.jpg
 var f embed.FS
 
 var DownloadFileErr = errors.New("error download audio")
